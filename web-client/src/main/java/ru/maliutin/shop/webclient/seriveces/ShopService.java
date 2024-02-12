@@ -65,13 +65,14 @@ public class ShopService {
         if (response.getStatusCode().is2xxSuccessful()){
             response = payOrder(sum, numberCredit);
             if (response.getStatusCode().is2xxSuccessful()){
-                productBay(productId, amount);
+                response = productBay(productId, amount);
+                if (!response.getStatusCode().is2xxSuccessful()){
+                    rollbackPayOrder(sum, numberCredit);
+                    rollbackProductReserve(productId, amount);
+                }
             }else{
-                rollbackPayOrder(sum, numberCredit);
                 rollbackProductReserve(productId, amount);
             }
-        }else{
-            rollbackProductReserve(productId, amount);
         }
     }
 
@@ -103,9 +104,9 @@ public class ShopService {
      * @param amount количество товара.
      */
     @LogLeadTime
-    private void productBay(Long id, int amount)
+    private ResponseEntity<?> productBay(Long id, int amount)
             throws HttpClientErrorException {
-        storageApi.bay(id, new Order(amount));
+        return storageApi.bay(id, new Order(amount));
     }
 
     /**

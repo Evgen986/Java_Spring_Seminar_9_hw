@@ -50,7 +50,7 @@ public class ProductService {
      */
 
     @Transactional
-    public void reduceAmount(@PathVariable Long id, int amount)
+    public void reduceAmount(Long id, int amount)
             throws ExcessAmountException{
         Product product = getProductById(id);
         if (amount > product.getAmount())
