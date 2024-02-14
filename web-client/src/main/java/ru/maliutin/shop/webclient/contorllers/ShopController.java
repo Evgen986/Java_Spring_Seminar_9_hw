@@ -1,5 +1,6 @@
 package ru.maliutin.shop.webclient.contorllers;
 
+import io.micrometer.core.annotation.Timed;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,6 +29,7 @@ public class ShopController {
      * @param model модель для передачи данных представлению.
      * @return домашнюю страницу.
      */
+    @Timed("getProductTime")
     @GetMapping("/")
     public String homePage(Model model,
                            @RequestParam(value = "confirm", required = false) String confirm){
@@ -44,6 +46,7 @@ public class ShopController {
      * @param amount количество товара.
      * @return перенаправление на домашнюю страницу.
      */
+    @Timed("ProductByTime")
     @PostMapping("/buy/{id}")
     public String buyProduct(Principal principal,
                              @PathVariable("id") Long id,
