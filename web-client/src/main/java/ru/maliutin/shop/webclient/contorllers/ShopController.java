@@ -6,11 +6,15 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import ru.maliutin.shop.webclient.facade.ShopFacade;
 import ru.maliutin.shop.webclient.models.Product;
+import ru.maliutin.shop.webclient.seriveces.FileGateway;
 import ru.maliutin.shop.webclient.seriveces.ShopService;
 
 import java.math.BigDecimal;
 import java.security.Principal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Контроллер магазина.
@@ -20,9 +24,9 @@ import java.security.Principal;
 @AllArgsConstructor
 public class ShopController {
     /**
-     * Сервис магазина.
+     * Объект срывающий сложную логику. Паттерн Фасад.
      */
-    private final ShopService shopService;
+    private final ShopFacade shopFacade;
 
     /**
      * Домашняя страница.
@@ -33,7 +37,7 @@ public class ShopController {
     @GetMapping("/")
     public String homePage(Model model,
                            @RequestParam(value = "confirm", required = false) String confirm){
-        model.addAttribute("products", shopService.getAll());
+        model.addAttribute("products", shopFacade.getProducts());
         if (confirm != null){
             model.addAttribute("confirm", confirm);
         }
@@ -48,17 +52,10 @@ public class ShopController {
      */
     @Timed("ProductByTime")
     @PostMapping("/buy/{id}")
-    public String buyProduct(Principal principal,
-                             @PathVariable("id") Long id,
+    public String buyProduct(@PathVariable("id") Long id,
                              @RequestParam("amount") Integer amount,
                              RedirectAttributes redirectAttributes){
-        Product product = shopService.getAll()
-                .stream()
-                .filter(prod -> prod.id().equals(id))
-                .findFirst()
-                .orElse(null);
-        BigDecimal sum = product.price().multiply(new BigDecimal(amount));
-        shopService.buyProduct(product.id(), amount, sum, 1L); // TODO Временно добавлен номер счета клиента
+        shopFacade.buyProduct(id, amount);
         redirectAttributes.addAttribute("confirm", "Покупка успешно совершена!");
         return "redirect:/";
     }
@@ -70,9 +67,9 @@ public class ShopController {
      * @return страницу с ошибками.
      */
     @ExceptionHandler(RuntimeException.class)
-    public String errorPage(Principal principal, RuntimeException e, Model model){
+    public String errorPage(RuntimeException e, Model model){
         model.addAttribute("message", e.getMessage());
-        model.addAttribute("products", shopService.getAll());
+        model.addAttribute("products", shopFacade.getProducts());
         return "home";
     }
 }
